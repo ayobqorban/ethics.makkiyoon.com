@@ -3,6 +3,8 @@
 namespace App\Livewire\Certificates;
 
 use App\Models\Certificate;
+use App\Models\Form;
+use App\Models\CountExampSuccess;
 use Livewire\Component;
 use Livewire\WithFileUploads;
 
@@ -14,19 +16,27 @@ class Index extends Component
     use WithFileUploads;
 
     public $certificates; // قائمة الشهادات
+    public $forms; // قائمة الاختبارات/النماذج
     public $certificateId;
     public $name;
     public $img;
+    public $selectedForms = []; // الاختبارات المحددة
     public $isEditMode = false;
 
     public function mount()
     {
         $this->loadCertificates();
+        $this->loadForms();
     }
 
     public function loadCertificates()
     {
         $this->certificates = Certificate::all();
+    }
+
+    public function loadForms()
+    {
+        $this->forms = Form::where('is_active', 1)->get();
     }
 
     // public function createQrCodeWithPdf($text)
@@ -165,15 +175,27 @@ class Index extends Component
         $this->validate([
             'name' => 'required|string|max:200',
             'img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:4048',
+            'selectedForms' => 'array', // تأكد من أن selectedForms هو مصفوفة
         ]);
 
         // رفع الصورة إلى المسار المحدد
         $imgPath = $this->img ? $this->img->store('uploads/templates', 'public') : null;
 
-        Certificate::create([
+        $certificate = Certificate::create([
             'name' => $this->name,
             'img' => $imgPath,
         ]);
+
+        // حفظ الاختبارات المرتبطة في جدول count_examp_success
+        if (!empty($this->selectedForms)) {
+            foreach ($this->selectedForms as $formId) {
+                CountExampSuccess::create([
+                    'cr_certificates_id' => $certificate->id,
+                    'forms_id' => $formId,
+                    'users_id' => auth()->id(), // المستخدم الحالي
+                ]);
+            }
+        }
 
         session()->flash('success', 'تم إضافة الشهادة بنجاح!');
         $this->resetForm();
@@ -185,6 +207,7 @@ class Index extends Component
         $this->validate([
             'name' => 'required|string|max:200',
             'img' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
+            'selectedForms' => 'array',
         ]);
 
         $certificate = Certificate::findOrFail($this->certificateId);
@@ -202,6 +225,20 @@ class Index extends Component
             ]);
         }
 
+        // حذف الاختبارات المرتبطة السابقة
+        CountExampSuccess::where('cr_certificates_id', $this->certificateId)->delete();
+
+        // حفظ الاختبارات المرتبطة الجديدة
+        if (!empty($this->selectedForms)) {
+            foreach ($this->selectedForms as $formId) {
+                CountExampSuccess::create([
+                    'cr_certificates_id' => $this->certificateId,
+                    'forms_id' => $formId,
+                    'users_id' => auth()->id(),
+                ]);
+            }
+        }
+
         session()->flash('success', 'تم تحديث الشهادة بنجاح!');
         $this->resetForm();
         $this->loadCertificates();
@@ -215,6 +252,10 @@ class Index extends Component
         $this->name = $certificate->name;
         $this->img = null;
         $this->isEditMode = true;
+
+        // تحميل الاختبارات المرتبطة بالشهادة
+        $relatedForms = CountExampSuccess::where('cr_certificates_id', $id)->pluck('forms_id')->toArray();
+        $this->selectedForms = $relatedForms;
     }
 
 
@@ -222,6 +263,10 @@ class Index extends Component
     public function deleteCertificate($id)
     {
         $certificate = Certificate::findOrFail($id);
+
+        // حذف الاختبارات المرتبطة بالشهادة
+        CountExampSuccess::where('cr_certificates_id', $id)->delete();
+
         $certificate->delete();
 
         session()->flash('success', 'تم حذف الشهادة بنجاح!');
@@ -233,6 +278,7 @@ class Index extends Component
         $this->name = '';
         $this->img = null;
         $this->certificateId = null;
+        $this->selectedForms = [];
         $this->isEditMode = false;
     }
 

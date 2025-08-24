@@ -14,6 +14,32 @@
                     <input wire:model="img" type="file" class="form-control" id="certificate_img" accept="image/*">
                     @error('img') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
+
+                <div class="mb-3 col-12">
+                    <label class="form-label">الاختبارات المرتبطة بالشهادة</label>
+                    <div class="row">
+                        @forelse($forms as $form)
+                            <div class="col-md-6 col-lg-4 mb-2">
+                                <div class="form-check">
+                                    <input 
+                                        wire:model="selectedForms" 
+                                        class="form-check-input" 
+                                        type="checkbox" 
+                                        value="{{ $form->id }}" 
+                                        id="form_{{ $form->id }}">
+                                    <label class="form-check-label" for="form_{{ $form->id }}">
+                                        {{ $form->title }}
+                                    </label>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-12">
+                                <p class="text-muted">لا توجد اختبارات متاحة</p>
+                            </div>
+                        @endforelse
+                    </div>
+                    @error('selectedForms') <span class="text-danger">{{ $message }}</span> @enderror
+                </div>
             </div>
             <div class="mb-0">
                 <button type="submit" class="btn btn-primary">
@@ -61,6 +87,7 @@
                                 <th>م</th>
                                 <th>اسم الشهادة</th>
                                 <th>خلفية الشهادة</th>
+                                <th>الاختبارات المرتبطة</th>
                                 <th>تاريخ الإنشاء</th>
                                 <th>تاريخ التحديث</th>
                                 <th>الإجراءات</th>
@@ -80,6 +107,22 @@
                                                 onclick="showImage('{{ asset('storage/' . $certificate->img) }}')">
                                         @else
                                             لا توجد صورة
+                                        @endif
+                                    </td>
+                                    <td>
+                                        @php
+                                            $relatedForms = App\Models\CountExampSuccess::where('cr_certificates_id', $certificate->id)
+                                                ->join('forms', 'count_examp_success.forms_id', '=', 'forms.id')
+                                                ->pluck('forms.title');
+                                        @endphp
+                                        @if($relatedForms->count() > 0)
+                                            <div class="badge-list">
+                                                @foreach($relatedForms as $formTitle)
+                                                    <span class="badge bg-primary me-1 mb-1">{{ $formTitle }}</span>
+                                                @endforeach
+                                            </div>
+                                        @else
+                                            <span class="text-muted">لا توجد اختبارات مرتبطة</span>
                                         @endif
                                     </td>
 
