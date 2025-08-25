@@ -69,7 +69,8 @@ Route::post('exam/{examId}/submit', [ExamController::class, 'submitExam'])->name
 // النماذج العامة
 Route::get('/gf_form',[GfFormController::class,'index'])->name('gf_forms.index');
 Route::get('/gf_form/{id}',[GfFormController::class,'show'])->name('gf_forms.show');
-Route::get('/gf_form/{gf_form_id}/{exam_id}/insert',[GfFormController::class,'insert_form'])->name('gf_forms.insert');
+Route::get('/gf_form/{gf_form_id}/insert',[GfFormController::class,'insert_form'])->name('gf_forms.insert');
+
 Route::get('/gf_form/{id}/result',[GfFormController::class,'result_form'])->name('gf_forms.result');
 
 Route::get('/gf_question',[GfQuestionsController::class,'index'])->name('gf_questions.index');

@@ -25,7 +25,7 @@
           <div class="card-body text-center">
             <h2 class="card-title text-primary mb-3">شكرا على المشاركة</h2>
             <p>يمكنك تحميل الشهادة من خلال الضغط على الزر أدناه</p>
-            <a class="btn btn-outline-dark" href="/storage/uploads/certificates/{{$downlaodCr}}">تحميل الشهادة</a>
+            {{-- <a class="btn btn-outline-dark" href="/storage/uploads/certificates/{{$downlaodCr}}">تحميل الشهادة</a> --}}
           </div>
         </div>
       </div>

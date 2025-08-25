@@ -8,7 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 class GfSubmission extends Model
 {
     use HasFactory;
-    protected $fillable = ['user_id','question_id', 'answer','form_Id'];
+    protected $fillable = ['user_id','question_id', 'answer','certificate_id'];
 
     public function question()
     {

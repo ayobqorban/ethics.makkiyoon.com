@@ -12,6 +12,7 @@ use App\Models\GfQuestions;
 use App\Models\GfSubmission;
 use App\Models\Submission;
 use App\Models\User;
+use App\Models\UserCertificate;
 use Livewire\Component;
 use SimpleSoftwareIO\QrCode\Facades\QrCode;
 use Mpdf\Mpdf;
@@ -32,33 +33,68 @@ class InsertForm extends Component
     public $downloadCertifiacte;
 
 
-    public function mount($gfFormId, $examId)
+    public function mount($gfFormId)
     {
-        $this->cr_fileName =  random_int(1000000000, 9999999999);
-        $this->gfFormId = $gfFormId;
-        $this->examId = $examId;
+        // التأكد من أن المستخدم مسجل دخول
+        if (!auth()->check()) {
+            return redirect()->route('login')->with('error', 'يجب تسجيل الدخول أولاً');
+        }
+
         $this->user_id = auth()->user()->id;
         $this->user = User::find($this->user_id);
-        $this->exam =  Exam::find($this->examId);
-        $this->downloadCertifiacte = $this->exam->certificated_name;
-        $this->formId = $this->exam->form_id;
 
-        if ($this->exam->gf_form == 'complete') {
-            $this->afterSend = true;
-        } else {
-            $this->afterSend = false;
+        // التحقق من إمكانية الوصول للنموذج (اجتياز جميع الاختبارات)
+        if (!$this->canAccessForm($gfFormId)) {
+            session()->flash('error', 'يجب اجتياز جميع الاختبارات المطلوبة قبل تعبئة هذا النموذج');
+            return redirect()->route('examps.page', $this->getCertificateId($gfFormId));
         }
+
+        $this->cr_fileName =  random_int(1000000000, 9999999999);
+        $this->gfFormId = $gfFormId;
+
+
+        // التأكد من أن الاختبار خاص بالمستخدم الحالي
+        if ($this->exam && $this->exam->user_id !== $this->user_id) {
+            session()->flash('error', 'غير مسموح بالوصول لهذا الاختبار');
+            return redirect()->back();
+        }
+
+        // $this->downloadCertifiacte = $this->exam->certificated_name;
+        // $this->formId = $this->exam->form_id;
+
+        // if ($this->exam->gf_form == 'complete') {
+        //     $this->afterSend = true;
+        // } else {
+        //     $this->afterSend = false;
+        // }
 
         // جلب الأسئلة من قاعدة البيانات مع الخيارات المرتبطة بها
         $this->questions = GfQuestions::with('options')->get();
     }
 
-    public function changeExamGfForm()
+    public function saveUserCertificate($certificateId)
     {
-        // dd($this->cr_fileName);
-        $this->exam->gf_form = 'complete';
-        $this->exam->certificated_name = $this->cr_fileName.'.pdf';
-        $this->exam->save();
+        // التحقق من عدم وجود شهادة مكتملة مسبقاً لنفس المستخدم والشهادة
+        $existingCertificate = UserCertificate::where('user_id', $this->user_id)
+            ->where('certificate_id', $certificateId)
+            ->first();
+
+        if (!$existingCertificate) {
+            UserCertificate::create([
+                'user_id' => $this->user_id,
+                'certificate_id' => $certificateId,
+                'certificate_filename' => $this->cr_fileName . '.pdf',
+                'status' => 'completed',
+                'completed_at' => now()
+            ]);
+        } else {
+            // تحديث الشهادة الموجودة
+            $existingCertificate->update([
+                'certificate_filename' => $this->cr_fileName . '.pdf',
+                'status' => 'completed',
+                'completed_at' => now()
+            ]);
+        }
     }
     public function submitForm()
     {
@@ -79,19 +115,19 @@ class InsertForm extends Component
                 GfSubmission::create([
                     'question_id' => $questionId,
                     'user_id' => $this->user_id,
-                    'form_Id' => $this->formId,
+                    'certificate_id' => $this->getCertificateId($this->gfFormId),
                     'answer' => is_array($answer) ? json_encode($answer) : $answer, // إذا كانت الإجابة نص أو اختيار
                 ]);
             }
 
             $this->createQrCode();
 
-            $form = Form::find($this->formId);
+            $certificateId = $this->getCertificateId($this->gfFormId);
             // اصدار الشهادة
-            $this->mPdfCertificate($form->certificate_id, $this->user->name);
+            $this->mPdfCertificate($certificateId, $this->user->name);
 
-            // تحويل إلى complete
-            $this->changeExamGfForm();
+            // حفظ بيانات الشهادة في جدول user_certificates
+            $this->saveUserCertificate($certificateId);
 
             $this->afterSend = true;
         }
@@ -249,10 +285,65 @@ class InsertForm extends Component
     }
 
 
+    /**
+     * التحقق من إمكانية الوصول للنموذج
+     */
+    private function canAccessForm($gfFormId)
+    {
+        $gfForm = GfForm::find($gfFormId);
+        if (!$gfForm) {
+            return false;
+        }
+
+        $countSuccess = \App\Models\CountExampSuccess::where('forms_id', $gfFormId)
+            ->where('form_type', 'gf_form')
+            ->first();
+
+        if (!$countSuccess) {
+            return true;
+        }
+
+        $certificateId = $countSuccess->cr_certificates_id;
+
+        $forms = Form::whereHas('countExampSuccess', function($query) use ($certificateId) {
+            $query->where('cr_certificates_id', $certificateId)
+                  ->where('form_type', 'form');
+        })->get();
+
+        if ($forms->isEmpty()) {
+            return true;
+        }
+
+        foreach ($forms as $form) {
+            $hasPassedExam = $form->exams()
+                ->where('user_id', $this->user_id)
+                ->where('status', 'completed')
+                ->exists();
+
+            if (!$hasPassedExam) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * الحصول على معرف الشهادة
+     */
+    private function getCertificateId($gfFormId)
+    {
+        $countSuccess = \App\Models\CountExampSuccess::where('forms_id', $gfFormId)
+            ->where('form_type', 'gf_form')
+            ->first();
+
+        return $countSuccess ? $countSuccess->cr_certificates_id : null;
+    }
+
     public function render()
     {
-        $downlaodCr = $this->exam->certificated_name;
+        // $downlaodCr = $this->exam->certificated_name;
         $fg_form = GfForm::find($this->gfFormId);
-        return view('livewire.gf-forms.insert-form', compact('fg_form','downlaodCr'));
+        return view('livewire.gf-forms.insert-form', compact('fg_form'));
     }
 }
