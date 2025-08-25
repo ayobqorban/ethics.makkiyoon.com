@@ -168,6 +168,7 @@ class InsertForm extends Component
     protected function mPdfCertificate($certificate_id, $fullname)
     {
 
+
         // استرجاع الشهادة من قاعدة البيانات
         $certificate = Certificate::find($certificate_id);
         if (!$certificate) {

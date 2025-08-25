@@ -29,11 +29,11 @@
                         <div class="text-truncate">جميع الاختبارات</div>
                     </a>
                 </li>
-                <li class="menu-item">
+                {{-- <li class="menu-item">
                     <a href="{{route('employee.forms.index')}}" class="menu-link">
                         <div class="text-truncate">الاختبارات</div>
                     </a>
-                </li>
+                </li> --}}
             </ul>
         </li>
     @if(auth()->user()->is_admin)
