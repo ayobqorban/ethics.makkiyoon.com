@@ -35,6 +35,15 @@
                     اجتز جميع الاختبارات لفتح النماذج العامة
                 </small>
             @endif
+
+            @if(isset($userCertificate) && $userCertificate)
+                <div class="float-end">
+                    <a href="{{ route('certificate.download', $userCertificate->certificate_filename) }}"
+                       class="btn btn-success btn-sm">
+                        <i class="bx bx-download me-1"></i>تحميل الشهادة
+                    </a>
+                </div>
+            @endif
         </h5>
 
             @if(count($forms) > 0)
@@ -144,9 +153,16 @@
                                     <td class="text-center">{{ count($forms) + $index + 1 }}</td>
                                     <td>
                                         @if($allExamsPassed)
-                                            <a href="{{route('gf_forms.insert', [$gfForm->id, 0])}}" class="text-decoration-none">
-                                                <i class="bx bx-file-blank me-1"></i>{{ $gfForm->title }}
-                                            </a>
+                                            @if($gfForm->is_completed ?? false)
+                                                <a href="{{route('gf_forms.view_answers', $gfForm->id)}}" class="text-decoration-none">
+                                                    <i class="bx bx-check-circle me-1 text-success"></i>{{ $gfForm->title }}
+                                                    <small class="badge bg-success ms-2">مكتمل</small>
+                                                </a>
+                                            @else
+                                                <a href="{{route('gf_forms.insert', [$gfForm->id, 0])}}" class="text-decoration-none">
+                                                    <i class="bx bx-file-blank me-1"></i>{{ $gfForm->title }}
+                                                </a>
+                                            @endif
                                         @else
                                             <span class="text-muted">
                                                 <i class="bx bx-lock-alt me-1"></i>{{ $gfForm->title }}

@@ -6,6 +6,7 @@ use App\Models\Certificate;
 use App\Models\Form;
 use App\Models\GfForm;
 use App\Models\CountExampSuccess;
+use App\Models\UserCertificate;
 use Illuminate\Http\Request;
 
 class exampsController extends Controller
@@ -47,14 +48,29 @@ class exampsController extends Controller
                   ->where('form_type', 'gf_form');
         })->get();
 
+        // إضافة معلومات إكمال النماذج العامة لكل نموذج
+        foreach ($gfForms as $gfForm) {
+            $gfForm->is_completed = UserCertificate::where('user_id', $userId)
+                ->where('certificate_id', $id)
+                ->where('status', 'completed')
+                ->exists();
+        }
+
         // التحقق من اجتياز جميع الاختبارات في الشهادة للمستخدم الحالي فقط
         $allExamsPassed = $this->checkAllExamsPassed($forms, $userId);
+
+        // التحقق من وجود شهادة مكتملة للمستخدم
+        $userCertificate = UserCertificate::where('user_id', $userId)
+            ->where('certificate_id', $id)
+            ->where('status', 'completed')
+            ->first();
 
         return view('pages.forms.employee_forms_index',[
             'forms' => $forms,
             'gfForms' => $gfForms,
             'selected_id' => $id,
-            'allExamsPassed' => $allExamsPassed
+            'allExamsPassed' => $allExamsPassed,
+            'userCertificate' => $userCertificate
         ]);
     }
 
@@ -83,6 +99,32 @@ class exampsController extends Controller
 
         // إذا اجتاز جميع الاختبارات
         return true;
+    }
+
+    /**
+     * تحميل الشهادة
+     */
+    public function downloadCertificate($filename)
+    {
+        $userId = auth()->id();
+
+        // التحقق من أن الشهادة تخص المستخدم الحالي
+        $userCertificate = UserCertificate::where('user_id', $userId)
+            ->where('certificate_filename', $filename)
+            ->where('status', 'completed')
+            ->first();
+
+        if (!$userCertificate) {
+            abort(404, 'الشهادة غير موجودة أو غير مصرح لك بالوصول إليها');
+        }
+
+        $filePath = storage_path('app/public/uploads/certificates/' . $filename);
+
+        if (!file_exists($filePath)) {
+            abort(404, 'ملف الشهادة غير موجود');
+        }
+
+        return response()->download($filePath, $filename);
     }
 }
 

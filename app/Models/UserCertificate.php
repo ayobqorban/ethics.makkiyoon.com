@@ -11,13 +11,15 @@ class UserCertificate extends Model
 
     protected $fillable = [
         'user_id',
-        'certificate_id', 
+        'certificate_id',
         'certificate_filename',
         'status',
         'completed_at'
     ];
 
-    protected $dates = ['completed_at'];
+    protected $casts = [
+        'completed_at' => 'datetime'
+    ];
 
     public function user()
     {

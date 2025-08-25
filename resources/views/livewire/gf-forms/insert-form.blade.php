@@ -16,6 +16,63 @@
             border-color: #71dd37 !important;
             box-shadow: 0 2px 4px 0 rgba(67, 89, 113, 0.4) !important;
         }
+        .modern-header-card {
+            background: linear-gradient(135deg, #f8f9fa 0%, #ffffff 100%);
+            border: none;
+            border-radius: 15px;
+            box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+            overflow: hidden;
+            position: relative;
+        }
+        .modern-header-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #71dd37, #20c997, #0dcaf0);
+        }
+        .form-title {
+            background: linear-gradient(135deg, #2c3e50, #34495e);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: 700;
+            font-size: 2rem;
+            letter-spacing: -0.5px;
+        }
+        .form-subtitle {
+            color: #6c757d;
+            font-weight: 400;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+        .completion-info {
+            background: rgba(113, 221, 55, 0.1);
+            border: 1px solid rgba(113, 221, 55, 0.2);
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 20px;
+        }
+        .completion-badge {
+            background: linear-gradient(135deg, #71dd37, #20c997);
+            color: white;
+            padding: 8px 16px;
+            border-radius: 25px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .illustration-wrapper {
+            opacity: 0.7;
+            transition: opacity 0.3s ease;
+        }
+        .modern-header-card:hover .illustration-wrapper {
+            opacity: 1;
+        }
     </style>
 @if($afterSend)
 <div class="col-12 mb-4 order-0">
@@ -38,23 +95,47 @@
 <div id="errorAlert" class="alert alert-danger">{{ session('error') }}</div>
 @endif
 <div class="col-12 mb-4 order-0">
-    <div class="card">
-      <div class="d-flex align-items-start row">
-        <div class="col-sm-7">
-          <div class="card-body">
-            <h4 class="card-title text-primary mb-3">{{$fg_form->title}}</h4>
-            <p class="mb-6 fs-6">{{$fg_form->description}}</p>
+    <div class="card modern-header-card">
+        <div class="card-body py-5">
+            <div class="row align-items-center">
+                <div class="col-lg-8">
+                    <h1 class="form-title mb-3">{{$fg_form->title}}</h1>
+                    <p class="form-subtitle mb-4">{{$fg_form->description}}</p>
 
-          </div>
+                    <div class="completion-info">
+                        <div class="d-flex align-items-center justify-content-between flex-wrap">
+                            <div class="d-flex align-items-center gap-3">
+                                <span class="completion-badge">
+                                    <i class="bx bx-check-circle"></i>
+                                    نموذج تفاعلي
+                                </span>
+                                <small class="text-muted">
+                                    <i class="bx bx-time me-1"></i>
+                                    الوقت المقدر: 10-15 دقيقة
+                                </small>
+                            </div>
+                            <div class="text-muted">
+                                <small>
+                                    <i class="bx bx-shield-check me-1"></i>
+                                    بياناتك محمية ومؤمنة
+                                </small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-lg-4 text-center">
+                    <div class="illustration-wrapper">
+                        <img src="{{asset('assets/img/illustrations/bulb-dark.png')}}"
+                             height="140"
+                             class="scaleX-n1-rtl"
+                             alt="Survey Illustration"
+                             style="filter: drop-shadow(0 4px 15px rgba(0,0,0,0.1));">
+                    </div>
+                </div>
+            </div>
         </div>
-        <div class="col-sm-5 text-center text-sm-left">
-          <div class="card-body pb-0 px-0 px-md-6">
-            <img src="{{asset('assets/img/illustrations/bulb-dark.png')}}" height="160" class="scaleX-n1-rtl" alt="View Badge User">
-          </div>
-        </div>
-      </div>
     </div>
-  </div>
+</div>
     <form wire:submit.prevent="submitForm">
         <!-- عرض الأسئلة -->
         @foreach ($questions as $index => $question)

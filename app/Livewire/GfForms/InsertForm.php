@@ -130,6 +130,9 @@ class InsertForm extends Component
             $this->saveUserCertificate($certificateId);
 
             $this->afterSend = true;
+
+            // إعادة التوجيه إلى صفحة الشهادة
+            return redirect()->route('examps.page', $certificateId)->with('success', 'تم إتمام النموذج العام بنجاح! يمكنك الآن تحميل الشهادة.');
         }
     }
 

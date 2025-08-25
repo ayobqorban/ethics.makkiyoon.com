@@ -54,6 +54,62 @@ class GfFormController extends Controller
         return view('pages.gf-forms.result_form',compact('id'));
     }
 
+    public function viewAnswers($gfFormId)
+    {
+        $userId = auth()->id();
+
+        if (!$userId) {
+            return redirect()->route('login')->with('error', 'يجب تسجيل الدخول أولاً');
+        }
+
+        // التحقق من وجود شهادة مكتملة للمستخدم
+        $certificateId = $this->getCertificateIdByForm($gfFormId);
+        $userCertificate = \App\Models\UserCertificate::where('user_id', $userId)
+            ->where('certificate_id', $certificateId)
+            ->where('status', 'completed')
+            ->first();
+
+        if (!$userCertificate) {
+            return redirect()->back()->with('error', 'لم يتم العثور على إجابات مكتملة لهذا النموذج');
+        }
+
+        // التأكد من أن completed_at هو Carbon instance
+        if (!$userCertificate->completed_at instanceof \Carbon\Carbon) {
+            $userCertificate->completed_at = \Carbon\Carbon::parse($userCertificate->completed_at);
+        }
+
+        // جلب النموذج العام
+        $gfForm = \App\Models\GfForm::find($gfFormId);
+        if (!$gfForm) {
+            return redirect()->back()->with('error', 'النموذج غير موجود');
+        }
+
+        // جلب الأسئلة مع الإجابات
+        $questionsWithAnswers = \App\Models\GfFormHasQuestion::where('form_id', $gfFormId)
+            ->with(['question.options'])
+            ->get()
+            ->map(function($formQuestion) use ($userId, $certificateId) {
+                $submission = \App\Models\GfSubmission::where('question_id', $formQuestion->questions_id)
+                    ->where('user_id', $userId)
+                    ->where('certificate_id', $certificateId)
+                    ->first();
+
+                $formQuestion->user_answer = $submission ? $submission->answer : null;
+                return $formQuestion;
+            });
+
+        return view('pages.gf-forms.view_answers', compact('gfForm', 'questionsWithAnswers', 'userCertificate', 'certificateId'));
+    }
+
+    private function getCertificateIdByForm($gfFormId)
+    {
+        $countSuccess = \App\Models\CountExampSuccess::where('forms_id', $gfFormId)
+            ->where('form_type', 'gf_form')
+            ->first();
+
+        return $countSuccess ? $countSuccess->cr_certificates_id : null;
+    }
+
     /**
      * التحقق من إمكانية الوصول للنموذج العام
      */

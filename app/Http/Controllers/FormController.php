@@ -8,6 +8,11 @@ use Illuminate\Http\Request;
 
 class FormController extends Controller
 {
+    public function __construct()
+    {
+        // التأكد من تسجيل الدخول لجميع وظائف هذا الـ Controller
+        $this->middleware('auth');
+    }
 
     public function index()
     {
