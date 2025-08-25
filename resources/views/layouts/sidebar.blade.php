@@ -25,6 +25,11 @@
             </a>
             <ul class="menu-sub">
                 <li class="menu-item">
+                    <a href="{{route('all.examps.index')}}" class="menu-link">
+                        <div class="text-truncate">جميع الاختبارات</div>
+                    </a>
+                </li>
+                <li class="menu-item">
                     <a href="{{route('employee.forms.index')}}" class="menu-link">
                         <div class="text-truncate">الاختبارات</div>
                     </a>

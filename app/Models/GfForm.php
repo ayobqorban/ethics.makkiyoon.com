@@ -18,4 +18,10 @@ class GfForm extends Model
         return $this->belongsToMany(GfQuestions::class, 'gf_form_has_questions', 'form_id', 'questions_id')
                     ->withTimestamps();
     }
+
+    // العلاقة مع جدول count_examp_success
+    public function countExampSuccess()
+    {
+        return $this->hasMany(CountExampSuccess::class, 'forms_id')->where('form_type', 'gf_form');
+    }
 }

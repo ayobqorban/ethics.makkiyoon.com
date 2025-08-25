@@ -6,7 +6,7 @@
                 <table class="table table-striped table-bordered">
                     <thead>
                         <tr>
-                            <th>م</th>
+                            <th style="width: 50px">م</th>
                             <th>العنوان</th>
                             <th class="text-center">حالة النموذج</th>
                             <th class="text-center">تاريخ البداية</th>

@@ -15,6 +15,7 @@ class CountExampSuccess extends Model
         'cr_certificates_id',
         'forms_id',
         'users_id',
+        'form_type', // 'form' أو 'gf_form'
     ];
 
     // العلاقة مع الشهادات
@@ -27,6 +28,12 @@ class CountExampSuccess extends Model
     public function form()
     {
         return $this->belongsTo(Form::class, 'forms_id');
+    }
+
+    // العلاقة مع النماذج العامة
+    public function gfForm()
+    {
+        return $this->belongsTo(GfForm::class, 'forms_id');
     }
 
     // العلاقة مع المستخدمين

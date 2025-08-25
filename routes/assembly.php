@@ -8,6 +8,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\QuestionController;
 use App\Http\Controllers\OptionController;
 use App\Http\Controllers\ExamController;
+use App\Http\Controllers\exampsController;
 use App\Http\Controllers\FormController;
 use App\Http\Controllers\GfFormController;
 use App\Http\Controllers\GfOptionsController;
@@ -38,6 +39,9 @@ Route::get('question/{id}',[QuestionController::class,'show'])->name('questions.
 Route::get('forms',[FormController::class,'index'])->name('forms.index');
 Route::get('form/{id}',[FormController::class,'show'])->name('forms.show');
 
+
+Route::get('examps',[exampsController::class,'examps_index'])->name('all.examps.index');
+Route::get('examps/{id}',[exampsController::class,'examps_page'])->name('examps.page');
 
 Route::get('employeeforms',[FormController::class,'employee_forms_index'])->name('employee.forms.index');
 

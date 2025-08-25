@@ -37,4 +37,10 @@ class Form extends Model
     {
         return $this->hasMany(Exam::class, 'form_id'); // افتراض أن جدول exams يحتوي على عمود form_id
     }
+
+    // العلاقة مع جدول count_examp_success
+    public function countExampSuccess()
+    {
+        return $this->hasMany(CountExampSuccess::class, 'forms_id');
+    }
 }

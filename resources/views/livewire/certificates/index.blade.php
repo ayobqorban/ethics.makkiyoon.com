@@ -21,11 +21,11 @@
                         @forelse($forms as $form)
                             <div class="col-md-6 col-lg-4 mb-2">
                                 <div class="form-check">
-                                    <input 
-                                        wire:model="selectedForms" 
-                                        class="form-check-input" 
-                                        type="checkbox" 
-                                        value="{{ $form->id }}" 
+                                    <input
+                                        wire:model="selectedForms"
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        value="{{ $form->id }}"
                                         id="form_{{ $form->id }}">
                                     <label class="form-check-label" for="form_{{ $form->id }}">
                                         {{ $form->title }}
@@ -39,6 +39,32 @@
                         @endforelse
                     </div>
                     @error('selectedForms') <span class="text-danger">{{ $message }}</span> @enderror
+                </div>
+
+                <div class="mb-3 col-12">
+                    <label class="form-label">النماذج العامة المرتبطة بالشهادة</label>
+                    <div class="row">
+                        @forelse($gfForms as $gfForm)
+                            <div class="col-md-6 col-lg-4 mb-2">
+                                <div class="form-check">
+                                    <input
+                                        wire:model="selectedGfForms"
+                                        class="form-check-input"
+                                        type="checkbox"
+                                        value="{{ $gfForm->id }}"
+                                        id="gf_form_{{ $gfForm->id }}">
+                                    <label class="form-check-label" for="gf_form_{{ $gfForm->id }}">
+                                        {{ $gfForm->title }} <span class="badge bg-secondary">نموذج عام</span>
+                                    </label>
+                                </div>
+                            </div>
+                        @empty
+                            <div class="col-12">
+                                <p class="text-muted">لا توجد نماذج عامة متاحة</p>
+                            </div>
+                        @endforelse
+                    </div>
+                    @error('selectedGfForms') <span class="text-danger">{{ $message }}</span> @enderror
                 </div>
             </div>
             <div class="mb-0">
@@ -111,19 +137,42 @@
                                     </td>
                                     <td>
                                         @php
+                                            // جلب الاختبارات المرتبطة
                                             $relatedForms = App\Models\CountExampSuccess::where('cr_certificates_id', $certificate->id)
+                                                ->where('form_type', 'form')
                                                 ->join('forms', 'count_examp_success.forms_id', '=', 'forms.id')
                                                 ->pluck('forms.title');
+
+                                            // جلب النماذج العامة المرتبطة
+                                            $relatedGfForms = App\Models\CountExampSuccess::where('cr_certificates_id', $certificate->id)
+                                                ->where('form_type', 'gf_form')
+                                                ->join('gf_forms', 'count_examp_success.forms_id', '=', 'gf_forms.id')
+                                                ->pluck('gf_forms.title');
                                         @endphp
-                                        @if($relatedForms->count() > 0)
-                                            <div class="badge-list">
-                                                @foreach($relatedForms as $formTitle)
-                                                    <span class="badge bg-primary me-1 mb-1">{{ $formTitle }}</span>
-                                                @endforeach
-                                            </div>
-                                        @else
-                                            <span class="text-muted">لا توجد اختبارات مرتبطة</span>
-                                        @endif
+
+                                        <div class="badge-list">
+                                            @if($relatedForms->count() > 0)
+                                                <div class="mb-2">
+                                                    <strong class="text-primary">الاختبارات:</strong><br>
+                                                    @foreach($relatedForms as $formTitle)
+                                                        <span class="badge bg-primary me-1 mb-1">{{ $formTitle }}</span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+
+                                            @if($relatedGfForms->count() > 0)
+                                                <div class="mb-2">
+                                                    <strong class="text-secondary">النماذج العامة:</strong><br>
+                                                    @foreach($relatedGfForms as $gfFormTitle)
+                                                        <span class="badge bg-secondary me-1 mb-1">{{ $gfFormTitle }}</span>
+                                                    @endforeach
+                                                </div>
+                                            @endif
+
+                                            @if($relatedForms->count() == 0 && $relatedGfForms->count() == 0)
+                                                <span class="text-muted">لا توجد نماذج مرتبطة</span>
+                                            @endif
+                                        </div>
                                     </td>
 
                                     <td>{{ $certificate->created_at }}</td>

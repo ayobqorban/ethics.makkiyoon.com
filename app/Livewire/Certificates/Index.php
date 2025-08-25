@@ -4,6 +4,7 @@ namespace App\Livewire\Certificates;
 
 use App\Models\Certificate;
 use App\Models\Form;
+use App\Models\GfForm;
 use App\Models\CountExampSuccess;
 use Livewire\Component;
 use Livewire\WithFileUploads;
@@ -17,16 +18,19 @@ class Index extends Component
 
     public $certificates; // قائمة الشهادات
     public $forms; // قائمة الاختبارات/النماذج
+    public $gfForms; // قائمة النماذج العامة
     public $certificateId;
     public $name;
     public $img;
     public $selectedForms = []; // الاختبارات المحددة
+    public $selectedGfForms = []; // النماذج العامة المحددة
     public $isEditMode = false;
 
     public function mount()
     {
         $this->loadCertificates();
         $this->loadForms();
+        $this->loadGfForms();
     }
 
     public function loadCertificates()
@@ -37,6 +41,11 @@ class Index extends Component
     public function loadForms()
     {
         $this->forms = Form::where('is_active', 1)->get();
+    }
+
+    public function loadGfForms()
+    {
+        $this->gfForms = GfForm::all();
     }
 
     // public function createQrCodeWithPdf($text)
@@ -193,6 +202,19 @@ class Index extends Component
                     'cr_certificates_id' => $certificate->id,
                     'forms_id' => $formId,
                     'users_id' => auth()->id(), // المستخدم الحالي
+                    'form_type' => 'form', // نوع النموذج: اختبار
+                ]);
+            }
+        }
+
+        // حفظ النماذج العامة المرتبطة
+        if (!empty($this->selectedGfForms)) {
+            foreach ($this->selectedGfForms as $gfFormId) {
+                CountExampSuccess::create([
+                    'cr_certificates_id' => $certificate->id,
+                    'forms_id' => $gfFormId,
+                    'users_id' => auth()->id(),
+                    'form_type' => 'gf_form', // نوع النموذج: نموذج عام
                 ]);
             }
         }
@@ -235,6 +257,19 @@ class Index extends Component
                     'cr_certificates_id' => $this->certificateId,
                     'forms_id' => $formId,
                     'users_id' => auth()->id(),
+                    'form_type' => 'form',
+                ]);
+            }
+        }
+
+        // حفظ النماذج العامة المرتبطة الجديدة
+        if (!empty($this->selectedGfForms)) {
+            foreach ($this->selectedGfForms as $gfFormId) {
+                CountExampSuccess::create([
+                    'cr_certificates_id' => $this->certificateId,
+                    'forms_id' => $gfFormId,
+                    'users_id' => auth()->id(),
+                    'form_type' => 'gf_form',
                 ]);
             }
         }
@@ -254,8 +289,16 @@ class Index extends Component
         $this->isEditMode = true;
 
         // تحميل الاختبارات المرتبطة بالشهادة
-        $relatedForms = CountExampSuccess::where('cr_certificates_id', $id)->pluck('forms_id')->toArray();
+        $relatedForms = CountExampSuccess::where('cr_certificates_id', $id)
+            ->where('form_type', 'form')
+            ->pluck('forms_id')->toArray();
         $this->selectedForms = $relatedForms;
+
+        // تحميل النماذج العامة المرتبطة بالشهادة
+        $relatedGfForms = CountExampSuccess::where('cr_certificates_id', $id)
+            ->where('form_type', 'gf_form')
+            ->pluck('forms_id')->toArray();
+        $this->selectedGfForms = $relatedGfForms;
     }
 
 
@@ -279,6 +322,7 @@ class Index extends Component
         $this->img = null;
         $this->certificateId = null;
         $this->selectedForms = [];
+        $this->selectedGfForms = [];
         $this->isEditMode = false;
     }
 
