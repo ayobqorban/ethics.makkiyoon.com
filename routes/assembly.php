@@ -21,7 +21,7 @@ use Illuminate\Support\Facades\Response;
 Route::get('/', function () {
     // التحقق من تسجيل الدخول
     if (Auth::check()) {
-        return redirect('/employeeforms'); // إذا كان المستخدم مسجلاً، يتم عرض الصفحة الرئيسية
+        return redirect('/examps'); // إذا كان المستخدم مسجلاً، يتم عرض صفحة الشهادات
     } else {
         return redirect('/login'); // إذا لم يكن مسجلاً، يتم توجيهه إلى صفحة تسجيل الدخول
     }
