@@ -134,6 +134,7 @@ class InsertForm extends Component
             // إعادة التوجيه إلى صفحة الشهادة
             return redirect()->route('examps.page', $certificateId)->with('success', 'تم إتمام النموذج العام بنجاح! يمكنك الآن تحميل الشهادة.');
         }
+
     }
 
 
